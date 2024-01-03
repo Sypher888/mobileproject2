@@ -19,6 +19,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     fetchDataFromFirebase();
+
     super.initState();
   }
 
@@ -45,11 +46,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchDataFromFirebase() async {
-    QuerySnapshot data =
-        await FirebaseFirestore.instance.collection('notes').get();
-    datalist.addAll(data.docs);
-    setState(() {});
-    print('its workingggggggggggggggggggggggggggggg');
+    try {
+      QuerySnapshot data =
+          await FirebaseFirestore.instance.collection('notes').get();
+
+      // Check if the widget is mounted before calling setState
+      if (mounted) {
+        datalist.addAll(data.docs);
+        setState(() {
+          // Set the state only if the widget is still mounted
+        });
+        print('its workinggggg');
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+    }
   }
 
   Future<void> showCreateNoteDialog() async {

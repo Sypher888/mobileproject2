@@ -2,6 +2,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fromfirebase/home_page.dart';
+import 'package:logger/logger.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -12,6 +13,8 @@ class Login extends StatefulWidget {
 
 final TextEditingController emailData = TextEditingController();
 final TextEditingController passwordData = TextEditingController();
+final logger = Logger();
+bool _isPasswordVisible = false;
 
 class _LoginState extends State<Login> {
   @override
@@ -111,9 +114,23 @@ class _LoginState extends State<Login> {
                     horizontal: 20,
                   ),
                   child: TextFormField(
+                    obscureText: !_isPasswordVisible,
                     controller: passwordData,
                     style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
+                      suffixIcon: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                        child: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.blue,
+                        ),
+                      ),
                       prefixIcon: const Icon(Icons.lock),
                       prefixIconColor: Colors.blue,
                       hintText: 'Enter your password..',
@@ -131,21 +148,36 @@ class _LoginState extends State<Login> {
                 ),
                 InkWell(
                   onTap: () async {
-                    // Send password reset email
-                    await FirebaseAuth.instance
-                        .sendPasswordResetEmail(email: emailData.text);
-
-                    // Show Awesome Dialog
-                    AwesomeDialog(
-                      title: 'Password Reset Email Sent',
-                      desc: 'Check your inbox to reset your password.',
-                      dialogType: DialogType.info,
-                      context: context,
-                    )..show();
-
-                    // Pop back to the login page
-                    await Future.delayed(const Duration(seconds: 1));
-                    Navigator.of(context).pop();
+                    if (emailData.text.isNotEmpty) {
+                      try {
+                        await FirebaseAuth.instance
+                            .sendPasswordResetEmail(email: emailData.text);
+                        AwesomeDialog(
+                          context: context,
+                          dialogType: DialogType.success,
+                          btnOkOnPress: () {},
+                          title: 'Link for password reset sent to your inbox',
+                        ).show();
+                        emailData.clear();
+                      } catch (e) {
+                        print('Error sending password reset email: $e');
+                        AwesomeDialog(
+                          context: context,
+                          dialogType: DialogType.error,
+                          btnOkOnPress: () {
+                            Navigator.of(context).pop();
+                          },
+                          title: 'Error sending password reset email',
+                        ).show();
+                      }
+                    } else {
+                      AwesomeDialog(
+                        context: context,
+                        dialogType: DialogType.error,
+                        btnOkOnPress: () {},
+                        title: 'Please insert email and press again',
+                      ).show();
+                    }
                   },
                   child: const Text(
                     'forget password ? ',
@@ -179,9 +211,9 @@ class _LoginState extends State<Login> {
                                   builder: (context) => const HomePage()));
                         } on FirebaseAuthException catch (e) {
                           if (e.code == 'user-not-found') {
-                            print('No user found for that email.');
+                            logger.i('No user found for that email.');
                           } else if (e.code == 'wrong-password') {
-                            print('Wrong password provided for that user.');
+                            logger.i('Wrong password provided for that user.');
                           }
                         }
                       },
@@ -284,3 +316,5 @@ class _LoginState extends State<Login> {
     );
   }
 }
+
+class GoogleSignInAccount {}

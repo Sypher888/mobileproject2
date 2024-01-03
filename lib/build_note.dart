@@ -22,19 +22,28 @@ class _MyWidgetState extends State<BuildNoteItem> {
       title: 'Delete Note',
       desc: 'Are you sure you want to delete this note?',
       btnCancelOnPress: () {},
-      btnOkOnPress: () {
-        // User clicked on "Yes," so delete the note
-        FirebaseFirestore.instance
+      btnOkOnPress: () async {
+        // Get a reference to the 'trash' collection
+        CollectionReference trashCollection =
+            FirebaseFirestore.instance.collection('trash');
+
+        // Get the note data
+        Map<String, dynamic> noteData =
+            widget.note.data() as Map<String, dynamic>;
+
+        // Add the note to the 'trash' collection
+        await trashCollection.add(noteData);
+
+        // Delete the note from the 'notes' collection
+        await FirebaseFirestore.instance
             .collection('notes')
             .doc(widget.note.id)
-            .delete()
-            .then((_) {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-              builder: ((context) => HomePage()))); // Pop the dialog
-        }).catchError((error) {
-          print('Error deleting note: $error');
-          // Handle the error, if needed
-        });
+            .delete();
+
+        // Navigate to the home page
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
       },
     )..show();
   }

@@ -15,6 +15,8 @@ final TextEditingController usernameData = TextEditingController();
 final TextEditingController emailData = TextEditingController();
 final TextEditingController passwordData = TextEditingController();
 
+bool _isPasswordVisible = false;
+
 class _LoginState extends State<Register> {
   @override
   Widget build(BuildContext context) {
@@ -146,9 +148,23 @@ class _LoginState extends State<Register> {
                     horizontal: 20,
                   ),
                   child: TextFormField(
+                    obscureText: !_isPasswordVisible,
                     style: const TextStyle(color: Colors.black),
                     controller: passwordData,
                     decoration: InputDecoration(
+                      suffixIcon: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                        child: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.orange,
+                        ),
+                      ),
                       prefixIcon: const Icon(Icons.lock),
                       prefixIconColor: Colors.orange,
                       hintText: 'Enter your password..',
@@ -170,34 +186,43 @@ class _LoginState extends State<Register> {
                   ),
                   child: ElevatedButton(
                     onPressed: () async {
-                      try {
-                        await FirebaseAuth.instance
-                            .createUserWithEmailAndPassword(
-                          email: emailData.text,
-                          password: passwordData.text,
-                        );
+                      if (usernameData.text.isNotEmpty &&
+                          emailData.text.isNotEmpty &&
+                          passwordData.text.isNotEmpty) {
+                        try {
+                          await FirebaseAuth.instance
+                              .createUserWithEmailAndPassword(
+                            email: emailData.text,
+                            password: passwordData.text,
+                          );
+                          AwesomeDialog(
+                            context: context,
+                            dialogType: DialogType.success,
+                            animType: AnimType.bottomSlide,
+                            title: 'Awesome Dialog',
+                          ).show();
+                          await Future.delayed(const Duration(seconds: 1));
+                          Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) => const HomePage()));
+                        } on FirebaseAuthException catch (e) {
+                          if (e.code == 'weak-password') {
+                            print('The password provided is too weak.');
+                          } else if (e.code == 'email-already-in-use') {
+                            print('The account already exists for that email.');
+                          }
+                        } catch (e) {
+                          print(e);
+                        }
+                      } else {
                         AwesomeDialog(
                           context: context,
-                          dialogType: DialogType.success,
+                          dialogType: DialogType.error,
                           animType: AnimType.bottomSlide,
-                          title: 'Awesome Dialog',
-                          desc: 'Flutter is awesome!',
-                          btnOkText: 'Okay',
-                          btnOkOnPress: () {
-                            // Do something when Okay button is pressed
-                          },
+                          title: ' invalid credentials',
+                          btnOkText: 'Ok',
+                          btnOkOnPress: () {},
                         ).show();
-                        await Future.delayed(const Duration(seconds: 1));
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(
-                            builder: (context) => const HomePage()));
-                      } on FirebaseAuthException catch (e) {
-                        if (e.code == 'weak-password') {
-                          print('The password provided is too weak.');
-                        } else if (e.code == 'email-already-in-use') {
-                          print('The account already exists for that email.');
-                        }
-                      } catch (e) {
-                        print(e);
                       }
                     },
                     style: ElevatedButton.styleFrom(

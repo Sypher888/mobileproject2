@@ -1,8 +1,8 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fromfirebase/home_page.dart';
-import 'package:fromfirebase/register.dart';
+import 'package:fromfirebase/login.dart';
+import 'package:fromfirebase/trash.dart';
 
 class Drawerr extends StatefulWidget {
   const Drawerr({super.key});
@@ -31,10 +31,10 @@ class _DrawerrState extends State<Drawerr> {
               padding: const EdgeInsets.only(top: 50),
               child: TextButton(
                   onPressed: () {
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) => const HomePage()));
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const Trash()));
                   },
-                  child: const Text('Home',
+                  child: const Text('Trash',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 25,
@@ -58,7 +58,7 @@ class _DrawerrState extends State<Drawerr> {
                           await FirebaseAuth.instance.signOut();
                           Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
-                                  builder: (context) => const Register()));
+                                  builder: (context) => const Login()));
                         }).show();
                   },
                   child: const Text('Sign Out',
